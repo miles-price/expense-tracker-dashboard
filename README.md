@@ -1,63 +1,57 @@
-Expense Tracker Dashboard
+# Expense Tracker Dashboard 
 
 A data-driven personal expense tracker built with Python, Streamlit, and pandas. The application allows users to record expenses, filter spending data, visualize trends, and manage stored entries through an interactive dashboard.
 
-Features
-	•	Add and store expenses with category, description, and date
-	•	Category dropdown with option to add new categories
-	•	Interactive dashboard with spending analytics
-	•	Filter expenses by category and date range
-	•	Visualize spending using bar and line charts
-	•	View and manage saved expenses
-	•	Delete expense entries
-	•	Persistent storage using JSON
+## Live Demo
 
-Screenshots
+Access the deployed app here:
+https://expense-tracker-dashboard-zf2vjfqzwddq5zyezznvc3.streamlit.app/
 
-Add Expense Page
+## Features
 
-Dashboard Overview
+- Add and store expenses with category, description, and date
+- Category dropdown with option to add new categories
+- Interactive dashboard with spending analytics
+- Filter expenses by category and date range
+- Visualize spending using bar and line charts
+- View and manage saved expenses
+- Delete expense entries
+- Persistent storage using JSON
 
-Tech Stack
-	•	Python
-	•	Streamlit
-	•	Pandas
-	•	Matplotlib
-	•	JSON storage
+## Screenshots
 
-How to Run
-	1.	Clone the repository:
+### Add Expense Page
 
+![Add Expense](screenshots/add-expense.png)
+
+### Dashboard Overview
+
+![Dashboard](screenshots/dashboard.png)
+
+## Tech Stack
+
+- Python
+- Streamlit
+- Pandas
+- Matplotlib
+- JSON storage
+
+## How to Run
+
+```bash
 git clone https://github.com/miles-price/expense-tracker-dashboard.git
-
-
-	2.	Navigate into the project:
-
 cd expense-tracker-dashboard
-
-
-	3.	Install dependencies:
-
 pip install -r requirements.txt
-
-
-	4.	Run the app:
-
 python3 -m streamlit run app.py
+```
 
-
-
-Then open the displayed local URL in your browser.
-
-Project Purpose
+## Project Purpose
 
 This project demonstrates:
-	•	Modular Python application design
-	•	Data manipulation and visualization
-	•	Interactive UI development
-	•	Persistent data storage
-	•	CRUD operations in a real-world application
 
-⸻
-
-Built as part of a software engineering portfolio to demonstrate practical Python and application development skills.
+- Modular Python application design
+- Data manipulation and visualization
+- Interactive UI development
+- Persistent data storage
+- CRUD operations in a real-world application
+_Last updated_
