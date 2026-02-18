@@ -4,6 +4,10 @@ A portfolio-grade personal finance app built with Python and Streamlit.
 
 This project demonstrates practical SWE skills: data modeling, CRUD flows, input validation, analytics, testing, and clear product UX.
 
+## Live Demo
+
+https://expense-tracker-dashboard-zf2vjfqzwddq5zyezznvc3.streamlit.app/
+
 ## Features
 
 - Add expenses with `amount`, `category`, `description`, and `date`
@@ -58,7 +62,7 @@ pytest -q
    - Main file path: `app.py`
 4. Click `Deploy`.
 
-After deploy, add the live app URL to this README and your resume.
+After deploy, add the live app URL to your resume.
 
 ## Project Structure
 
