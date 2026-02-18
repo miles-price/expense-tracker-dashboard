@@ -1,8 +1,8 @@
-# Personal Expense Tracker (Streamlit)
+# Personal Expense Tracker
 
-I built this personal expense tracker to showcase my software engineering skills in a practical product I can demo to recruiters.
+I built this personal expense tracker as a practical, demo-ready application that allows users to record and analyze their spending through an interactive dashboard.
 
-The app focuses on real engineering fundamentals: clean data modeling, CRUD workflows, input validation, analytics, testing, and an easy-to-use dashboard UI.
+The app emphasizes core engineering fundamentals including clean data modeling, CRUD workflows, input validation, analytics, testing, and an easy-to-use dashboard UI.
 
 ## Live Demo
 
