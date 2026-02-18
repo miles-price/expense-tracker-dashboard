@@ -1,14 +1,23 @@
 [
     {
+        "id": "397caaa7-b853-42e3-98db-caf98827ae02",
         "amount": 12.5,
         "category": "Food",
         "description": "Lunch",
-        "date": "2026-02-17 18:24:10"
+        "date": "2026-02-17"
     },
     {
+        "id": "f45974cc-ed38-4fed-b46f-4331e403e4b0",
         "amount": 45.0,
         "category": "Gas",
         "description": "Fill up",
-        "date": "2026-02-17 18:24:34"
+        "date": "2026-02-17"
+    },
+    {
+        "id": "26c4abec-dc02-40ea-a0fe-9e9de282b2c5",
+        "amount": 400.0,
+        "category": "Car Note",
+        "description": "",
+        "date": "2026-02-18"
     }
 ]

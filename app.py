@@ -1,75 +1,112 @@
-import streamlit as st
+from __future__ import annotations
+
+from datetime import date
+
 import matplotlib.pyplot as plt
 import pandas as pd
+import streamlit as st
 
+from analysis import (
+    average_transaction,
+    category_summary,
+    load_dataframe,
+    monthly_total,
+    spending_over_time,
+    top_category,
+    total_spent,
+)
 from expense import Expense
-from storage import load_expenses, save_expense, save_all_expenses
-from analysis import load_dataframe, total_spent, category_summary, spending_over_time
+from storage import delete_expense, load_expenses, save_expense
 
-st.set_page_config(page_title="Expense Tracker Dashboard", layout="wide")
-st.title("💰 Personal Expense Tracker Dashboard")
+st.set_page_config(page_title="Personal Expense Tracker", layout="wide")
+st.title("Personal Expense Tracker")
+st.caption("Track spending, monitor your monthly budget, and export clean data for analysis.")
 
-# Sidebar Navigation
-menu = st.sidebar.selectbox("Menu", ["Add Expense", "Dashboard", "Data"])
 
-# ---------------------------
-# PAGE 1: ADD EXPENSE
-# ---------------------------
+# Sidebar controls
+st.sidebar.header("Controls")
+menu = st.sidebar.radio("Navigation", ["Add Expense", "Dashboard", "Manage Data"])
+monthly_budget = st.sidebar.number_input(
+    "Monthly budget ($)",
+    min_value=0.0,
+    value=float(st.session_state.get("monthly_budget", 2000.0)),
+    step=50.0,
+)
+st.session_state["monthly_budget"] = monthly_budget
+
+
+def _load_df() -> pd.DataFrame:
+    return load_dataframe(load_expenses())
+
+
+def _usd(value: float) -> str:
+    return f"${value:,.2f}"
+
+
 if menu == "Add Expense":
     st.subheader("Add a New Expense")
 
-    amount = st.number_input("Amount ($)", min_value=0.0, format="%.2f")
-    # Build category choices from existing data
-    existing = load_expenses()
-    existing_categories = sorted({e.get("category", "").strip() for e in existing if e.get("category")})
-    category_choice = st.selectbox("Category", existing_categories + ["➕ Add new category" ] if existing_categories else ["➕ Add new category"])
+    existing_categories = sorted(
+        {
+            item.get("category", "").strip()
+            for item in load_expenses()
+            if item.get("category")
+        }
+    )
 
-    if category_choice == "➕ Add new category":
-        category = st.text_input("New category name").strip()
-    else:
-        category = category_choice
+    with st.form("add_expense_form", clear_on_submit=True):
+        amount = st.number_input("Amount ($)", min_value=0.01, format="%.2f")
+        category_choice = st.selectbox(
+            "Category",
+            existing_categories + ["Add new category"] if existing_categories else ["Add new category"],
+        )
 
-    description = st.text_input("Description (optional)").strip()
-    expense_date = st.date_input("Date", value=pd.Timestamp.today().date())
+        category = (
+            st.text_input("New category").strip()
+            if category_choice == "Add new category"
+            else category_choice
+        )
 
-    if st.button("Save Expense"):
-        if amount <= 0:
-            st.error("Amount must be greater than 0.")
-        elif not category:
-            st.error("Category is required.")
-        else:
-            expense = Expense(amount, category, description, expense_date)
-            save_expense(expense.to_dict())
-            st.success("✅ Expense saved!")
+        description = st.text_input("Description (optional)").strip()
+        expense_date = st.date_input("Date", value=date.today())
+        submitted = st.form_submit_button("Save Expense")
 
-    st.caption("Tip: Use consistent category names (e.g., Food vs food) for cleaner charts.")
+        if submitted:
+            if not category:
+                st.error("Category is required.")
+            else:
+                expense = Expense(
+                    amount=amount,
+                    category=category,
+                    description=description,
+                    expense_date=expense_date,
+                )
+                save_expense(expense.to_dict())
+                st.success("Expense saved.")
 
-# ---------------------------
-# PAGE 2: DASHBOARD (CHARTS)
-# ---------------------------
+    st.info("Tip: keep category names consistent (e.g., use either 'Food' or 'Groceries', not both).")
+
 elif menu == "Dashboard":
-    st.subheader("Spending Overview")
+    st.subheader("Dashboard")
 
-    expenses = load_expenses()
-    df = load_dataframe(expenses)
-
+    df = _load_df()
     if df.empty:
-        st.info("No expenses recorded yet. Add one from the 'Add Expense' page.")
-    else:
-        # Metrics
-        st.metric("Total Spent", f"${total_spent(df):.2f}")
+        st.info("No expenses yet. Add your first expense from the Add Expense page.")
+        st.stop()
 
-        # Filters
-        st.markdown("### Filters")
-        all_categories = sorted(df["category"].dropna().unique().tolist())
-        selected_categories = st.multiselect("Category", all_categories, default=all_categories)
+    min_date = df["date"].min().date()
+    max_date = df["date"].max().date()
 
-        # Date range filter
-        df = df.copy()
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        min_date = df["date"].min().date() if df["date"].notna().any() else pd.Timestamp.today().date()
-        max_date = df["date"].max().date() if df["date"].notna().any() else pd.Timestamp.today().date()
+    filter_col1, filter_col2, filter_col3 = st.columns([2, 2, 1])
 
+    with filter_col1:
+        selected_categories = st.multiselect(
+            "Filter by category",
+            options=sorted(df["category"].unique().tolist()),
+            default=sorted(df["category"].unique().tolist()),
+        )
+
+    with filter_col2:
         start_date, end_date = st.date_input(
             "Date range",
             value=(min_date, max_date),
@@ -77,88 +114,105 @@ elif menu == "Dashboard":
             max_value=max_date,
         )
 
-        filtered_df = df[df["category"].isin(selected_categories)].copy()
-        filtered_df = filtered_df[(filtered_df["date"].dt.date >= start_date) & (filtered_df["date"].dt.date <= end_date)].copy()
+    with filter_col3:
+        min_amount, max_amount = st.slider(
+            "Amount range",
+            min_value=float(df["amount"].min()),
+            max_value=float(df["amount"].max()),
+            value=(float(df["amount"].min()), float(df["amount"].max())),
+        )
 
-        if filtered_df.empty:
-            st.info("No expenses match the selected filters. Adjust your category selection to see charts and data.")
-            st.stop()
+    filtered_df = df[
+        (df["category"].isin(selected_categories))
+        & (df["date"].dt.date >= start_date)
+        & (df["date"].dt.date <= end_date)
+        & (df["amount"] >= min_amount)
+        & (df["amount"] <= max_amount)
+    ].copy()
 
-        col1, col2 = st.columns(2)
+    if filtered_df.empty:
+        st.warning("No expenses match your current filters.")
+        st.stop()
 
-        # Chart 1: Bar chart by category
-        with col1:
-            st.markdown("### Spending by Category")
-            cat_data = category_summary(filtered_df)
+    total = total_spent(filtered_df)
+    monthly_spend = monthly_total(filtered_df)
+    avg_txn = average_transaction(filtered_df)
+    top = top_category(filtered_df)
 
-            fig1, ax1 = plt.subplots()
-            cat_data.plot(kind="bar", ax=ax1)
-            ax1.set_xlabel("Category")
-            ax1.set_ylabel("Amount ($)")
-            ax1.tick_params(axis="x", rotation=30)
-            st.pyplot(fig1)
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("Total Spent", _usd(total))
+    m2.metric("This Month", _usd(monthly_spend))
+    m3.metric("Avg Transaction", _usd(avg_txn))
+    m4.metric("Top Category", top)
 
-        # Chart 2: Spending over time
-        with col2:
-            st.markdown("### Spending Over Time")
-            time_data = spending_over_time(filtered_df)
+    if monthly_budget > 0:
+        utilization = min(monthly_spend / monthly_budget, 1.0)
+        st.progress(utilization, text=f"Budget used: {_usd(monthly_spend)} / {_usd(monthly_budget)}")
+        if monthly_spend > monthly_budget:
+            st.error(f"Over budget by {_usd(monthly_spend - monthly_budget)} this month.")
 
-            fig2, ax2 = plt.subplots()
-            time_data.plot(kind="line", marker="o", ax=ax2)
-            ax2.set_xlabel("Date")
-            ax2.set_ylabel("Amount ($)")
-            ax2.tick_params(axis="x", rotation=30)
-            st.pyplot(fig2)
+    c1, c2 = st.columns(2)
 
-        # Table view
-        st.markdown("### Expenses Table")
-        filtered_df["amount"] = filtered_df["amount"].astype(float)
-        st.dataframe(filtered_df.sort_values("date", ascending=False), use_container_width=True)
+    with c1:
+        st.markdown("### Spending by Category")
+        cat_data = category_summary(filtered_df)
+        fig1, ax1 = plt.subplots()
+        cat_data.plot(kind="bar", ax=ax1, color="#ff8c42")
+        ax1.set_xlabel("Category")
+        ax1.set_ylabel("Amount ($)")
+        ax1.tick_params(axis="x", rotation=30)
+        st.pyplot(fig1)
 
-        st.markdown("### Delete an Expense")
+    with c2:
+        st.markdown("### Spending Trend")
+        trend = spending_over_time(filtered_df, frequency="D")
+        fig2, ax2 = plt.subplots()
+        trend.plot(kind="line", ax=ax2, marker="o", color="#2a9d8f")
+        ax2.set_xlabel("Date")
+        ax2.set_ylabel("Amount ($)")
+        ax2.tick_params(axis="x", rotation=30)
+        st.pyplot(fig2)
 
-        filtered_df_display = filtered_df.sort_values("date", ascending=False).reset_index(drop=True)
-        options = [
-            f"{i}: ${row['amount']:.2f} | {row['category']} | {row['description']} | {row['date']}"
-            for i, row in filtered_df_display.iterrows()
-        ]
+    st.markdown("### Recent Transactions")
+    display_df = filtered_df.sort_values("date", ascending=False).copy()
+    display_df["date"] = display_df["date"].dt.strftime("%Y-%m-%d")
+    st.dataframe(display_df[["date", "category", "description", "amount"]], use_container_width=True)
 
-        to_delete = st.selectbox("Select an expense to delete", options)
+    csv_data = display_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="Download filtered data as CSV",
+        data=csv_data,
+        file_name="filtered_expenses.csv",
+        mime="text/csv",
+    )
 
-        if st.button("Delete Selected Expense"):
-            delete_index = int(to_delete.split(":")[0])
-
-            all_expenses = load_expenses()
-            all_df = load_dataframe(all_expenses).sort_values("date", ascending=False).reset_index(drop=True)
-
-            row = filtered_df_display.iloc[delete_index]
-            match = (
-                (all_df["amount"].astype(float) == float(row["amount"])) &
-                (all_df["category"] == row["category"]) &
-                (all_df["description"] == row["description"]) &
-                (all_df["date"] == row["date"])
-            )
-
-            match_indices = all_df[match].index.tolist()
-            if match_indices:
-                all_df = all_df.drop(match_indices[0]).reset_index(drop=True)
-                save_all_expenses(all_df.to_dict(orient="records"))
-                st.success("Deleted! Refreshing dashboard...")
-                st.rerun()
-            else:
-                st.error("Could not find that expense in the saved data.")
-
-# ---------------------------
-# PAGE 3: RAW DATA VIEW
-# ---------------------------
-elif menu == "Data":
-    st.subheader("Raw Expense Data (data.json)")
-
-    expenses = load_expenses()
-    df = load_dataframe(expenses)
+elif menu == "Manage Data":
+    st.subheader("Manage Saved Expenses")
+    df = _load_df()
 
     if df.empty:
-        st.info("No data yet.")
-    else:
-        st.write(df)
-        st.caption("This table is generated from your saved JSON file.")
+        st.info("No data to manage yet.")
+        st.stop()
+
+    manage_df = df.sort_values("date", ascending=False).copy()
+    manage_df["date"] = manage_df["date"].dt.strftime("%Y-%m-%d")
+
+    st.dataframe(
+        manage_df[["id", "date", "category", "description", "amount"]],
+        use_container_width=True,
+    )
+
+    options = [
+        f"{row['id']} | {row['date']} | ${row['amount']:.2f} | {row['category']} | {row['description']}"
+        for _, row in manage_df.iterrows()
+    ]
+    selected = st.selectbox("Select one expense to delete", options)
+
+    if st.button("Delete selected expense", type="secondary"):
+        selected_id = selected.split(" | ")[0].strip()
+        was_deleted = delete_expense(selected_id)
+        if was_deleted:
+            st.success("Expense deleted.")
+            st.rerun()
+        else:
+            st.error("Could not delete this entry. Please refresh and try again.")

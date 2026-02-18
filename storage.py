@@ -1,25 +1,70 @@
+from __future__ import annotations
+
 import json
-import os
+from pathlib import Path
+from typing import Any
 
-FILE_NAME = "data.json"
+from expense import Expense
 
-def load_expenses():
-    if not os.path.exists(FILE_NAME):
+FILE_NAME = Path("data.json")
+
+
+def _write_json(payload: list[dict[str, Any]]) -> None:
+    FILE_NAME.write_text(json.dumps(payload, indent=4), encoding="utf-8")
+
+
+def load_expenses() -> list[dict[str, Any]]:
+    if not FILE_NAME.exists():
         return []
 
-    with open(FILE_NAME, "r") as file:
-        try:
-            return json.load(file)
-        except json.JSONDecodeError:
-            return []
+    try:
+        raw = json.loads(FILE_NAME.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
 
-def save_expense(expense):
+    if not isinstance(raw, list):
+        return []
+
+    normalized: list[dict[str, Any]] = []
+    has_changes = False
+
+    for item in raw:
+        if not isinstance(item, dict):
+            has_changes = True
+            continue
+
+        expense = Expense.from_dict(item)
+        normalized_item = expense.to_dict()
+        normalized.append(normalized_item)
+
+        if normalized_item != item:
+            has_changes = True
+
+    if has_changes:
+        _write_json(normalized)
+
+    return normalized
+
+
+def save_all_expenses(expenses: list[dict[str, Any]]) -> None:
+    cleaned = [Expense.from_dict(item).to_dict() for item in expenses]
+    _write_json(cleaned)
+
+
+def save_expense(expense: dict[str, Any]) -> dict[str, Any]:
     expenses = load_expenses()
-    expenses.append(expense)
+    normalized = Expense.from_dict(expense).to_dict()
+    expenses.append(normalized)
+    _write_json(expenses)
+    return normalized
 
-    with open(FILE_NAME, "w") as file:
-        json.dump(expenses, file, indent=4)
 
-def save_all_expenses(expenses):
-    with open(FILE_NAME, "w") as file:
-        json.dump(expenses, file, indent=4)
+def delete_expense(expense_id: str) -> bool:
+    expenses = load_expenses()
+    remaining = [item for item in expenses if item.get("id") != expense_id]
+
+    if len(remaining) == len(expenses):
+        return False
+
+    _write_json(remaining)
+    return True
