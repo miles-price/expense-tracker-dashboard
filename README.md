@@ -1,4 +1,4 @@
-# Expense Tracker Dashboard 
+# Expense Tracker Dashboard
 
 A data-driven personal expense tracker built with Python, Streamlit, and pandas. The application allows users to record expenses, filter spending data, visualize trends, and manage stored entries through an interactive dashboard.
 
@@ -43,15 +43,4 @@ git clone https://github.com/miles-price/expense-tracker-dashboard.git
 cd expense-tracker-dashboard
 pip install -r requirements.txt
 python3 -m streamlit run app.py
-```
 
-## Project Purpose
-
-This project demonstrates:
-
-- Modular Python application design
-- Data manipulation and visualization
-- Interactive UI development
-- Persistent data storage
-- CRUD operations in a real-world application
-_Last updated_
