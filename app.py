@@ -54,35 +54,32 @@ if menu == "Add Expense":
         }
     )
 
-    with st.form("add_expense_form", clear_on_submit=True):
-        amount = st.number_input("Amount ($)", min_value=0.01, format="%.2f")
-        category_choice = st.selectbox(
-            "Category",
-            existing_categories + ["Add new category"] if existing_categories else ["Add new category"],
-        )
+    amount = st.number_input("Amount ($)", min_value=0.01, format="%.2f")
+    category_choice = st.selectbox(
+        "Category",
+        existing_categories + ["Add new category"] if existing_categories else ["Add new category"],
+    )
 
-        category = (
-            st.text_input("New category").strip()
-            if category_choice == "Add new category"
-            else category_choice
-        )
+    if category_choice == "Add new category":
+        category = st.text_input("New category").strip()
+    else:
+        category = category_choice
 
-        description = st.text_input("Description (optional)").strip()
-        expense_date = st.date_input("Date", value=date.today())
-        submitted = st.form_submit_button("Save Expense")
+    description = st.text_input("Description (optional)").strip()
+    expense_date = st.date_input("Date", value=date.today())
 
-        if submitted:
-            if not category:
-                st.error("Category is required.")
-            else:
-                expense = Expense(
-                    amount=amount,
-                    category=category,
-                    description=description,
-                    expense_date=expense_date,
-                )
-                save_expense(expense.to_dict())
-                st.success("Expense saved.")
+    if st.button("Save Expense"):
+        if not category:
+            st.error("Category is required.")
+        else:
+            expense = Expense(
+                amount=amount,
+                category=category,
+                description=description,
+                expense_date=expense_date,
+            )
+            save_expense(expense.to_dict())
+            st.success("Expense saved.")
 
     st.info("Tip: keep category names consistent (e.g., use either 'Food' or 'Groceries', not both).")
 
