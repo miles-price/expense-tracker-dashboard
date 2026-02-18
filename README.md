@@ -1,12 +1,22 @@
 # Personal Expense Tracker (Streamlit)
 
-A portfolio-grade personal finance app built with Python and Streamlit.
+I built this personal expense tracker to showcase my software engineering skills in a practical product I can demo to recruiters.
 
-This project demonstrates practical SWE skills: data modeling, CRUD flows, input validation, analytics, testing, and clear product UX.
+The app focuses on real engineering fundamentals: clean data modeling, CRUD workflows, input validation, analytics, testing, and an easy-to-use dashboard UI.
 
 ## Live Demo
 
 https://expense-tracker-dashboard-zf2vjfqzwddq5zyezznvc3.streamlit.app/
+
+## Screenshots
+
+### Add Expense Flow
+
+![Add Expense](screenshots/add-expense.png)
+
+### Dashboard Analytics
+
+![Dashboard](screenshots/dashboard.png)
 
 ## Features
 
@@ -74,7 +84,7 @@ analysis.py     # Analytics helpers
 tests/          # Unit tests for analytics and storage
 ```
 
-## Resume Bullet Ideas
+## Highlights
 
 - Built and shipped a full-stack-style data app in Python/Streamlit with end-to-end CRUD, analytics, and export workflows.
 - Designed a robust persistence layer that normalizes legacy data and prevents malformed records from breaking the app.
